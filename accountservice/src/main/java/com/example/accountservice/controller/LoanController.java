@@ -1,79 +1,81 @@
 package com.example.accountservice.controller;
 
-import org.springframework.web.bind.annotation.*;
 import com.example.accountservice.entity.Loan;
+import com.example.accountservice.entity.LoanStatement;
 import com.example.accountservice.service.LoanService;
+import org.springframework.web.bind.annotation.*;
+import com.example.accountservice.repository.LoanStatementRepository;
+
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
 @RequestMapping("/loans")
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:3000")
 public class LoanController {
 
     private final LoanService loanService;
+    private final LoanStatementRepository loanStatementRepository;
 
-    public LoanController(LoanService loanService) {
+    public LoanController(LoanService loanService, LoanStatementRepository loanStatementRepository) {
         this.loanService = loanService;
+        this.loanStatementRepository = loanStatementRepository;
     }
 
-    // APPLY LOAN
-    @PostMapping
+    @PostMapping("/apply")
     public Loan applyLoan(@RequestBody Loan loan) {
         return loanService.applyLoan(loan);
     }
 
-    // GET ALL
+   @GetMapping("/statement/{loanId}")
+public List<LoanStatement> getLoanStatement(
+        @PathVariable String loanId) {
+
+    LocalDateTime fromDate =
+            LocalDateTime.now().minusMonths(3);
+
+    return loanStatementRepository
+            .findByLoanIdAndTransactionDateAfter(
+                    loanId,
+                    fromDate);
+}
+
+  @GetMapping("/customer/{customerId}")
+public List<Loan> getLoansByCustomer(
+        @PathVariable String customerId) {
+
+    System.out.println("LOAN CUSTOMER API HIT");
+
+    return loanService.getLoansByCustomer(customerId);
+}
+
     @GetMapping
     public List<Loan> getAllLoans() {
         return loanService.getAllLoans();
     }
 
-    // APPROVE
-    @PostMapping("/{loanId}/approve")
-    public Loan approveLoan(@PathVariable String loanId) {
-        return loanService.approveLoan(loanId);
+    @PutMapping("/{id}/approve")
+    public Loan approveLoan(@PathVariable String id) {
+        return loanService.approveLoan(id);
     }
 
-    // REJECT
-    @PostMapping("/{loanId}/reject")
-    public Loan rejectLoan(@PathVariable String loanId) {
-        return loanService.rejectLoan(loanId);
+    @PutMapping("/{id}/reject")
+    public Loan rejectLoan(@PathVariable String id) {
+        return loanService.rejectLoan(id);
     }
 
-    @PutMapping("/{loanId}/verify")
-    public Loan verifyLoan(@PathVariable String loanId) {
-        return loanService.verifyLoan(loanId);
+    @PutMapping("/{id}/close")
+    public Loan closeLoan(@PathVariable String id) {
+        return loanService.closeLoan(id);
     }
 
-    @PutMapping("/{loanId}/disburse")
-    public Loan disburseLoan(@PathVariable String loanId) {
-        return loanService.disburseLoan(loanId);
+    @PostMapping("/{loanId}/pay-emi")
+    public Loan payEmi(@PathVariable String loanId) {
+        return loanService.payEmi(loanId);
     }
 
-    @PutMapping("/{loanId}/close")
-    public Loan closeLoan(@PathVariable String loanId) {
-        return loanService.closeLoan(loanId);
-    }
-
-    // upload and submit documents (representative of document management)
-    @PutMapping("/{id}/upload-documents")
-    public Loan uploadDocs(@PathVariable String id) {
-        return loanService.uploadDocuments(id);
-    }
-
-    @PutMapping("/{id}/submit-documents")
-    public Loan submitDocs(@PathVariable String id) {
-        return loanService.submitDocuments(id);
-    }
-
-    // request more documents from customer(verification failure)
-    @PutMapping("/{id}/request-documents")
-    public Loan requestDocs(@PathVariable String id) {
-        return loanService.requestDocuments(id);
-    }
-
-    @PutMapping("/{id}/verify")
-    public Loan verifyDocs(@PathVariable String id) {
-        return loanService.verifyDocuments(id);
+    @GetMapping("/account/{accountNumber}")
+    public List<Loan> getLoansByAccount(@PathVariable String accountNumber) {
+        return loanService.getLoansByAccount(accountNumber);
     }
 }

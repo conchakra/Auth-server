@@ -8,7 +8,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "customers_rel")
+@Table(name = "customer")
 @EntityListeners(AuditListener.class)
 @Getter
 @Setter
@@ -23,13 +23,18 @@ public class CustomerEntity {
     private String name;
     private String email;
     private String phone;
-    private String newStatus;
+    private String status;
     private String kyc;
     private String aadhaar;
     private String pan;
+    @Column(name="photo")
     private String photo;
 
+    @Column(name="thumbnail")
+    private String thumbnail;
+    
     private LocalDateTime updatedAt;
+
 
     @PrePersist
     @PreUpdate
@@ -54,12 +59,18 @@ public class CustomerEntity {
     private String remarks;
 
     public void setNewStatus(String status) {
-        this.newStatus = status;
+        this.status = status;
         if (status != null) {
             this.customerStatus = CustomerStatus.valueOf(status);
         }
     }
 
+    public void setStatus(String status){
+        this.status = status;
+        if (status != null) {
+            this.customerStatus = CustomerStatus.valueOf(status.toUpperCase());
+        }
+    }
     public void setStatus(CustomerStatus status) {
         this.customerStatus = status;
     }

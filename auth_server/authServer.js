@@ -8,7 +8,14 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+app.use((req,res,next)=>{
+  console.log("REQUEST RECEIVED:", req.method, req.url);
+  next();
+});
+
 const SECRET_KEY = "mysecret";
+
+let deviceTokens = [];
 
 /*GENERATE TOKEN*/
 app.post("/generate-token", (req, res) => {
@@ -72,9 +79,45 @@ app.post('/verify-token', (req, res) => {
   }
 
 });
+
+app.post("/save-device-token", (req,res)=>{
+
+  console.log("SAVE DEVICE TOKEN REQUEST RECEIVED");
+
+  console.log("REQUEST BODY:", req.body);
+
+  const {username, token} = req.body;
+
+const existing = deviceTokens.find(
+  item => item.username === username
+);
+
+if(existing){
+  existing.token = token;
+}
+else{
+  deviceTokens.push({
+    username,
+    token
+  });
+}
+
+  console.log(
+    "DEVICE TOKEN SAVED:",
+    username,
+    token
+  );
+
+
+  res.json({
+    message:"Token saved"
+  });
+
+});
+
 /* -------------------------------
    START SERVER
 --------------------------------*/
-app.listen(4000, () => {
+app.listen(4000, "0.0.0.0", () => {
     console.log("Auth Server running on port 4000");
 });

@@ -9,6 +9,24 @@ function LoanPage() {
   const [loans, setLoans] = useState([]);
   const [amount, setAmount] = useState("");
   const [role, setRole] = useState("VERIFIER");
+  const [showLoan, setShowLoan] = useState(true);
+
+  useEffect(() => {
+  fetchLoanFlag();
+}, []);
+
+const fetchLoanFlag = async () => {
+  try {
+    const res = await axios.get(
+      "http://localhost:8083/feature-flags/LOAN_ENABLED"
+    );
+
+    setShowLoan(res.data.flagValue);
+
+  } catch (error) {
+    console.error("Feature Flag Error:", error);
+  }
+};
 
   // ✅ FIXED (useCallback to remove warning)
   const fetchLoans = useCallback(async () => {
@@ -76,25 +94,23 @@ function LoanPage() {
   };
 
   const applyLoan = async () => {
-    try {
-      if (!amount) {
-        alert("Enter amount");
-        return;
-      }
+  try {
+    await axios.post("http://localhost:8082/loans/apply", {
+      customerId: "1",  // or dynamic later
+      accountNumber: accountNumber,
+      amount: amount,
+      remarks: "Loan from UI"
+    });
 
-      await axios.post("http://localhost:8082/loans", {
-        customerId: 18, // TEMP (fix later)
-        accountNumber: accountNumber,
-        amount: Number(amount),
-      });
+    alert("Loan Applied Successfully");
 
-      setAmount("");
-      fetchLoans();
-    } catch (error) {
-      console.error("Apply loan error:", error);
-      alert("Error applying loan ❌");
-    }
-  };
+    fetchLoans(); // refresh table
+
+  } catch (error) {
+    console.error(error);
+    alert("Error applying loan");
+  }
+};
 
   const approveLoan = async (id) => {
     try {
@@ -104,6 +120,14 @@ function LoanPage() {
       console.error(error);
     }
   };
+
+  if (!showLoan) {
+  return (
+    <div>
+      Loan Module Disabled
+    </div>
+  );
+}
 
   return (
     <div style={{ padding: "20px" }}>

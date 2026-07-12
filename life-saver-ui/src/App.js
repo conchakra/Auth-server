@@ -11,6 +11,8 @@ import AccountsTable from "./pages/AccountsTable";
 import AccountTransactions from "./pages/AccountTransactions";
 import LoanPage from "./pages/LoanPage";
 import ApplyLoanPage from "./pages/ApplyLoanPage";
+import LoanWorkflowPage from "./pages/LoanWorkflowPage";
+
 
 function App() {
   return (
@@ -80,6 +82,10 @@ function App() {
           path="/loans/:accountNumber"
           element={<LoanPage />}
         />
+
+        <Route
+           path="/loan-workflow" 
+           element={<LoanWorkflowPage />} />
 
       </Routes>
     </Router>

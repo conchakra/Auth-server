@@ -4,6 +4,7 @@ import com.example.accountservice.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -35,9 +36,9 @@ public class Account {
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
 
-    @Column(nullable = false)
-    private Double balance = 0.0;
+    @Column(nullable = false, precision = 19, scale = 2)
+    private BigDecimal balance;
 
-    @Column(nullable = false)
-    private Double interestRate = 5.0;
+    @Column(nullable = false, precision = 5, scale = 2)
+    private BigDecimal interestRate = new BigDecimal("5.0");
 }

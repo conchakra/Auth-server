@@ -58,14 +58,23 @@ function CustomerDetails() {
 
         {/* LEFT SIDE IMAGE */}
         <div>
-          {customer.imagePath && (
-            <img
-              src={`http://localhost:8080/${customer.imagePath}`}
-              alt="Customer"
-              width="180"
-              style={{ borderRadius: "8px" }}
-            />
-          )}
+     {customer.photo && (
+  <div style={{ marginTop: "20px" }}>
+    <b>Photo:</b><br />
+
+  <img
+  src={`http://localhost:8081/files/${customer.photo}`}
+  alt="Customer"
+  style={{
+    width: "150px",
+    height: "150px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border: "3px solid #4CAF50"
+  }}
+    />
+  </div>
+)}
         </div>
 
         {/* RIGHT SIDE DETAILS */}

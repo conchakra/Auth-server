@@ -4,7 +4,6 @@ import com.example.accountservice.entity.Loan;
 import java.util.List;
 
 public interface LoanService {
-
     Loan applyLoan(Loan loan);
 
     List<Loan> getAllLoans();
@@ -26,4 +25,10 @@ public interface LoanService {
     Loan requestDocuments(String loanId);
 
     Loan verifyDocuments(String loanId);
+
+    Loan payEmi(String loanId);
+
+    List<Loan> getLoansByAccount(String accountNumber);
+
+    List<Loan> getLoansByCustomer(String customerId);
 }

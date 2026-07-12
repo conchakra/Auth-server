@@ -7,6 +7,7 @@ import com.project.findisc.audit_table.service.CustomerService;
 import com.project.findisc.audit_table.storage.FileStorageProvider;
 import com.project.findisc.audit_table.dto.StatusUpdateRequest;
 import com.project.findisc.audit_table.dto.CustomerVerifyResponseDto;
+import org.springframework.core.io.Resource;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,22 @@ public class CustomerController {
         this.customerService = customerService;
         this.storageProvider = storageProvider;
     }
+
+
+    @GetMapping("/photo/{fileName}")
+public ResponseEntity<Resource> getPhoto(
+        @PathVariable String fileName)
+        throws IOException {
+
+    Resource resource =
+            storageProvider.getFile(fileName);
+
+    return ResponseEntity.ok()
+            .contentType(
+                    MediaType.IMAGE_JPEG)
+            .body(resource);
+}
+
 
     @PutMapping("/{id}/status")
     public ResponseEntity<String> updateStatus(
@@ -88,14 +105,14 @@ public class CustomerController {
 
     // ✅ CREATE CUSTOMER
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CustomerEntity> createCustomer(
-            @RequestParam String name,
-            @RequestParam String phone,
-            @RequestParam String kyc,
-            @RequestParam(required = false) String aadhaar,
-            @RequestParam(required = false) String pan,
-            @RequestParam(required = false) MultipartFile photo)
-            throws IOException {
+public ResponseEntity<CustomerEntity> createCustomer(
+        @RequestParam String name,
+        @RequestParam String phone,
+        @RequestParam String kyc,
+        @RequestParam(required = false) String aadhaar,
+        @RequestParam(required = false) String pan,
+        @RequestParam(required = false) MultipartFile photo)
+        throws IOException {
 
         CustomerEntity customer = new CustomerEntity();
         customer.setName(name);
@@ -103,44 +120,51 @@ public class CustomerController {
         customer.setKyc(kyc);
         customer.setAadhaar(aadhaar);
         customer.setPan(pan);
+        
+if (photo != null && !photo.isEmpty()) {
 
-        if (photo != null && !photo.isEmpty()) {
-            String documentId = storageProvider.saveFile(photo);
-            customer.setPhoto(documentId);
-        }
+    String photoId = storageProvider.saveFile(photo);
+    String thumbnailId = "thumb_" + photoId;
+customer.setThumbnail(thumbnailId);
+    customer.setPhoto(photoId);
+}
 
         return ResponseEntity.ok(
                 customerService.createCustomer(customer));
     }
 
     // ✅ UPDATE CUSTOMER
-    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<CustomerEntity> updateCustomer(
-            @PathVariable Long id,
-            @RequestParam String name,
-            @RequestParam String phone,
-            @RequestParam String kyc,
-            @RequestParam(required = false) String aadhaar,
-            @RequestParam(required = false) String pan,
-            @RequestParam(required = false) MultipartFile photo)
-            throws IOException {
+  @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<CustomerEntity> updateCustomer(
+        @PathVariable Long id,
+        @RequestParam String name,
+        @RequestParam String phone,
+        @RequestParam String status,
+        @RequestParam String kyc,
+        @RequestParam(required = false) String aadhaar,
+        @RequestParam(required = false) String pan,
+        @RequestParam(required = false) MultipartFile photo)
+        throws IOException {
 
-        CustomerEntity existing = customerService.getCustomerById(id);
+    CustomerEntity existing = customerService.getCustomerById(id);
 
-        existing.setName(name);
-        existing.setPhone(phone);
-        existing.setKyc(kyc);
-        existing.setAadhaar(aadhaar);
-        existing.setPan(pan);
+    existing.setName(name);
+    existing.setPhone(phone);
+    existing.setStatus(status);   // ✅ IMPORTANT FIX
+    existing.setKyc(kyc);
+    existing.setAadhaar(aadhaar);
+    existing.setPan(pan);
 
-        if (photo != null && !photo.isEmpty()) {
-            String documentId = storageProvider.saveFile(photo);
-            existing.setPhoto(documentId);
-        }
+   if (photo != null && !photo.isEmpty()) {
 
-        return ResponseEntity.ok(
-                customerService.updateCustomer(id, existing));
-    }
+    String documentId = storageProvider.saveFile(photo);
+
+    existing.setPhoto(documentId);
+}
+
+    return ResponseEntity.ok(
+            customerService.updateCustomer(id, existing));
+}
 
     // ✅ DELETE CUSTOMER
     @DeleteMapping("/{customerId}")

@@ -24,7 +24,6 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import lombok.*;
 
 @Service
 public class AccountServiceImpl implements AccountService {
@@ -52,9 +51,21 @@ public class AccountServiceImpl implements AccountService {
         this.customerServiceClient = customerServiceClient;
     }
 
+
+    public List<AccountTransaction> getAccountStatement(
+        String accountNumber) {
+
+    LocalDateTime fromDate =
+            LocalDateTime.now().minusMonths(3);
+
+    return accountTransactionRepository
+            .findByAccountNumberAndTransactionDateTimeAfter(
+                    accountNumber,
+                    fromDate);
+}
+
     @Override
     public List<AccountResponseDto> getAllAccounts() {
-
         return accountRepository.findAll()
                 .stream()
                 .map(this::mapToResponse)
@@ -64,7 +75,6 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountResponseDto createAccount(CreateAccountRequestDto request) {
-
         boolean customerExists = customerServiceClient.verifyCustomer(request.getCustomerId());
         if (!customerExists) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND,
@@ -82,6 +92,8 @@ public class AccountServiceImpl implements AccountService {
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .customerId(request.getCustomerId())
+                .balance(request.getBalance() == null ? BigDecimal.ZERO : request.getBalance())
+                .interestRate(new BigDecimal("5.0"))
                 .openingDate(now)
                 .status(AccountStatus.ACTIVE)
                 .modifiedDate(now)
@@ -91,7 +103,7 @@ public class AccountServiceImpl implements AccountService {
 
         AccountBalance balance = AccountBalance.builder()
                 .accountNumber(accountNumber)
-                .accountBalance(BigDecimal.ZERO)
+                .accountBalance(account.getBalance())
                 .modifiedDate(now)
                 .build();
 
@@ -108,30 +120,25 @@ public class AccountServiceImpl implements AccountService {
                         "No active account series found"));
 
         int nextSequence = activeSeries.getLastSequence() + 1;
-
         if (nextSequence > 99999) {
             activeSeries.setIsActive(false);
             activeSeries.setModifiedDate(LocalDateTime.now());
             accountSeriesRepository.save(activeSeries);
 
             int nextSeriesValue = Integer.parseInt(activeSeries.getSeries()) + 1;
-
             AccountSeries newSeries = AccountSeries.builder()
                     .series(String.valueOf(nextSeriesValue))
                     .lastSequence(1)
                     .isActive(true)
                     .modifiedDate(LocalDateTime.now())
                     .build();
-
             accountSeriesRepository.save(newSeries);
-
             return formatAccountNumber(newSeries.getSeries(), 1);
         }
 
         activeSeries.setLastSequence(nextSequence);
         activeSeries.setModifiedDate(LocalDateTime.now());
         accountSeriesRepository.save(activeSeries);
-
         return formatAccountNumber(activeSeries.getSeries(), nextSequence);
     }
 
@@ -150,7 +157,6 @@ public class AccountServiceImpl implements AccountService {
                 .modifiedBy(modifiedBy)
                 .modifiedDate(LocalDateTime.now())
                 .build();
-
         accountAuditRepository.save(audit);
     }
 
@@ -166,16 +172,34 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+public AccountResponseDto getAccountByCustomer(
+        String customerId) {
+
+    Account account =
+            accountRepository
+                    .findByCustomerId(customerId)
+                    .orElseThrow(
+                            () -> new RuntimeException(
+                                    "Account not found"));
+
+    return AccountResponseDto.builder()
+            .id(account.getId())
+            .accountNumber(account.getAccountNumber())
+            .customerId(account.getCustomerId())
+            .balance(account.getBalance())
+            .status(account.getStatus())
+            .build();
+}
+
+    @Override
     @Transactional
     public void credit(String accountNumber, BigDecimal amount) {
-
         AccountBalance balance = accountBalanceRepository
                 .findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         balance.setAccountBalance(balance.getAccountBalance().add(amount));
         balance.setModifiedDate(LocalDateTime.now());
-
         accountBalanceRepository.save(balance);
 
         AccountTransaction txn = AccountTransaction.builder()
@@ -184,21 +208,18 @@ public class AccountServiceImpl implements AccountService {
                 .amount(amount)
                 .transactionDateTime(LocalDateTime.now())
                 .build();
-
         accountTransactionRepository.save(txn);
     }
 
     @Override
     @Transactional
     public void debit(String accountNumber, BigDecimal amount) {
-
         AccountBalance balance = accountBalanceRepository
                 .findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
         balance.setAccountBalance(balance.getAccountBalance().subtract(amount));
         balance.setModifiedDate(LocalDateTime.now());
-
         accountBalanceRepository.save(balance);
 
         AccountTransaction txn = AccountTransaction.builder()
@@ -207,7 +228,6 @@ public class AccountServiceImpl implements AccountService {
                 .amount(amount)
                 .transactionDateTime(LocalDateTime.now())
                 .build();
-
         accountTransactionRepository.save(txn);
     }
 
@@ -216,7 +236,6 @@ public class AccountServiceImpl implements AccountService {
         AccountBalance balance = accountBalanceRepository
                 .findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
-
         return balance.getAccountBalance();
     }
 
@@ -226,27 +245,27 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    @Transactional
     public Account applyInterest(String accountNumber) {
-
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        double rate = account.getInterestRate();
-        double interest = (account.getBalance() * rate) / 100;
+        BigDecimal rate = account.getInterestRate();
+        BigDecimal interest = account.getBalance()
+                .multiply(rate)
+                .divide(BigDecimal.valueOf(100), 2, BigDecimal.ROUND_HALF_UP);
 
-        // Update balance
-        account.setBalance(account.getBalance() + interest);
+        account.setBalance(account.getBalance().add(interest));
+        account.setModifiedDate(LocalDateTime.now());
         accountRepository.save(account);
 
-        // Save transaction
-        AccountTransaction txn = new AccountTransaction();
-        txn.setAccountNumber(account.getAccountNumber());
-        txn.setTransactionType(TransactionType.INTEREST);
-        txn.setAmount(BigDecimal.valueOf(interest));
-        txn.setTransactionDateTime(LocalDateTime.now());
-
+        AccountTransaction txn = AccountTransaction.builder()
+                .accountNumber(account.getAccountNumber())
+                .transactionType(TransactionType.INTEREST)
+                .amount(interest)
+                .transactionDateTime(LocalDateTime.now())
+                .build();
         accountTransactionRepository.save(txn);
-
         return account;
     }
 }

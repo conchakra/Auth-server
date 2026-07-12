@@ -19,10 +19,11 @@ function ApplyLoanPage() {
 
       setLoading(true);
 
-      await axios.post("http://localhost:8082/loans", {
+      await axios.post("http://localhost:8082/loans/apply", {
         customerId: customerId, 
         accountNumber: accountNumber,
         amount: Number(amount),
+        remarks: "Loan from UI"
       });
 
       alert("Loan applied successfully ✅");

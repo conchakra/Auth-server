@@ -8,40 +8,50 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 
-@Component
-@Profile("!test") 
+@Component   // ✅ REQUIRED
+@Profile("!test")
 public class AuthFilter implements Filter {
 
     @Autowired
     private AuthServiceClient authService;
 
     @Override
-    public void doFilter(
-            ServletRequest request,
-            ServletResponse response,
-            FilterChain chain) throws IOException, ServletException {
+public void doFilter(
+        ServletRequest request,
+        ServletResponse response,
+        FilterChain chain) throws IOException, ServletException {
 
-        HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
+    HttpServletRequest req = (HttpServletRequest) request;
+    HttpServletResponse res = (HttpServletResponse) response;
 
-        String authHeader = req.getHeader("Authorization");
+    String path = req.getRequestURI();
 
-        if (authHeader == null) {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            res.getWriter().write("Missing Token");
-            return;
-        }
+    // ✅ Skip token check for customer APIs
+    if (path.startsWith("/customer/api/v1/customers")
+    || path.startsWith("/files/")
+    || path.startsWith("/generate-token")) {
 
-        String token = authHeader.replace("Bearer ", "");
+    chain.doFilter(request, response);
+    return;
+}
+    String authHeader = req.getHeader("Authorization");
 
-        boolean valid = authService.verifyToken(token);
-
-        if (!valid) {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            res.getWriter().write("Invalid Token");
-            return;
-        }
-
-        chain.doFilter(request, response);
+    if (authHeader == null) {
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        res.getWriter().write("Missing Token");
+        return;
     }
+
+    String token = authHeader.replace("Bearer ", "");
+
+    boolean valid = authService.verifyToken(token);
+
+    if (!valid) {
+        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        res.getWriter().write("Invalid Token");
+        return;
+    }
+
+    chain.doFilter(request, response);
+}
 }

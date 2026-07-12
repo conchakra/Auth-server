@@ -311,6 +311,12 @@ function AccountsTable() {
 >
   Apply Loan
 </button>
+
+<button onClick={() => navigate("/loan-workflow")}>
+  Workflow
+</button>
+
+
       </td>
     </tr>
   ))}
@@ -349,7 +355,8 @@ function AccountsTable() {
             </table>
           </div>
         )}
-<button onClick={() => navigate(-1)}>⬅ Back</button>
+
+       <button onClick={() => navigate(-1)}>⬅ Back</button>
       </div>
     </div>
   );

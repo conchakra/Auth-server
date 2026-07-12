@@ -70,7 +70,7 @@ const EditCustomer = () => {
       );
 
       alert("Customer updated successfully!");
-      navigate("/"); // change if your route is different
+      navigate(`/customers/${id}`); // change if your route is different
     } catch (error) {
       console.error("Update error:", error);
       alert("Error updating customer");

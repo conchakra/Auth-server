@@ -2,6 +2,8 @@ package com.example.accountservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,19 +23,23 @@ public class Loan {
 
     private String accountNumber;
 
-    private Double amount;
+    private BigDecimal amount;
 
-    private String status; // PENDING, APPROVED, REJECTED
+    private BigDecimal remainingAmount;
 
-    private LocalDateTime createdDate;
+    private BigDecimal emiAmount;
 
-    private LocalDateTime modifiedDate;
+    private String status;
 
     private String role;
 
     private String remarks;
 
-    private boolean documentsSubmitted;
+    private Boolean documentsSubmitted = false;
 
-    private boolean documentsVerified;
+    private Boolean documentsVerified = false;
+
+    private LocalDateTime createdDate;
+
+    private LocalDateTime modifiedDate;
 }
