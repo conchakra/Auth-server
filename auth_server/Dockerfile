@@ -1,9 +1,13 @@
-FROM eclipse-temurin:21-jdk
+FROM node:20
 
 WORKDIR /app
 
-COPY target/auth_server-0.0.1-SNAPSHOT.jar app.jar
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
 
 EXPOSE 8080
 
-ENTRYPOINT ["java","-jar","app.jar"]
+CMD ["node", "authServer.js"]
