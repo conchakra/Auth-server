@@ -1,4 +1,4 @@
-FROM node:20
+FROM node:22-alpine
 
 WORKDIR /app
 
@@ -8,6 +8,6 @@ RUN npm install
 
 COPY . .
 
-EXPOSE 3000
+EXPOSE 4000
 
-CMD ["node", "authServer.js"]
+CMD ["npm", "start"]
