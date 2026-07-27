@@ -1,0 +1,4 @@
+application: authserver
+registry: localhost:5000
+image: auth-server
+version: 1.0
