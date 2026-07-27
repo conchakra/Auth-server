@@ -118,6 +118,11 @@ else{
 /* -------------------------------
    START SERVER
 --------------------------------*/
+
+app.get("/health", (req, res) => {
+    res.status(200).send("UP");
+});
+
 app.listen(4000, "0.0.0.0", () => {
     console.log("Auth Server running on port 4000");
 });
