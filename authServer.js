@@ -17,9 +17,10 @@ app.post("/generate-token", (req, res) => {
 
   // Dummy users database
   const users = {
-    sinchana: { password: "123", roles: ["ADMIN"] },
+    sinchana: { password: "123", roles: ["MANAGER"] },
     verifier: { password: "123", roles: ["VERIFIER"] },
     manager: { password: "123", roles: ["MANAGER"] },
+    suadmin: { password: "123", roles: ["ADMIN"] },
     rep: { password: "123", roles: ["REPRESENTATIVE"] }
   };
 
