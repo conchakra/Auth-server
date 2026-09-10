@@ -19,6 +19,7 @@ app.post("/generate-token", (req, res) => {
   const users = {
     sinchana: { password: "123", roles: ["MANAGER"] },
      arushi: {password: "123", roles: ["VERIFIER"] },
+    harsha: { password: "123", roles: ["VERIFIER"] },
     verifier: { password: "123", roles: ["VERIFIER"] },
     manager: { password: "123", roles: ["MANAGER"] },
     suadmin: { password: "123", roles: ["ADMIN"] },
